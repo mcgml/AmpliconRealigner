@@ -100,9 +100,9 @@ public class Main {
                     String upstreamPrimerSequence = referenceSequence.getReferenceSequence().substring(0, genomicLocation.getUpstreamPrimerLength());
                     String downstreamPrimerSequence = referenceSequence.getReferenceSequence().substring(referenceSequence.getReferenceSequence().length() - genomicLocation.getDownstreamPrimerLength());
 
-                    log.log(Level.INFO, "Reference sequence: " + referenceSequence.getReferenceSequence());
-                    log.log(Level.INFO, "Upstream primer: " + upstreamPrimerSequence);
-                    log.log(Level.INFO, "Downstream primer: " + downstreamPrimerSequence);
+                    log.log(Level.FINE, "Reference sequence: " + referenceSequence.getReferenceSequence());
+                    log.log(Level.FINE, "Upstream primer: " + upstreamPrimerSequence);
+                    log.log(Level.FINE, "Downstream primer: " + downstreamPrimerSequence);
 
                     //query alignments
                     SAMRecordIterator samRecordIterator = samReader.queryOverlapping(genomicLocation.getContig(), genomicLocation.getStartPosition(), genomicLocation.getEndPosition());
@@ -111,10 +111,21 @@ public class Main {
                             .filter(samRecord -> !samRecord.getReadUnmappedFlag())
                             .filter(samRecord -> !samRecord.getNotPrimaryAlignmentFlag())
                             .filter(samRecord -> !samRecord.getSupplementaryAlignmentFlag())
-                            .filter(samRecord -> !samRecord.getReadFailsVendorQualityCheckFlag())
                             .filter(samRecord -> {
-                                return (double) (upstreamPrimerSequence.length() - Hamming.getHammingDistance(samRecord.getReadString().substring(0, upstreamPrimerSequence.length()), upstreamPrimerSequence)) / upstreamPrimerSequence.length() > primerSimilarity &&
-                                        (double) (downstreamPrimerSequence.length() - Hamming.getHammingDistance(samRecord.getReadString().substring(samRecord.getReadLength() - downstreamPrimerSequence.length()), downstreamPrimerSequence)) / downstreamPrimerSequence.length() > primerSimilarity;
+
+                                //calculate hamming distances
+                                int upstreamPrimerHammingDist = Hamming.getHammingDistance(samRecord.getReadString().substring(0, upstreamPrimerSequence.length()), upstreamPrimerSequence);
+                                int downstreamPrimerHammingDist = Hamming.getHammingDistance(samRecord.getReadString().substring(samRecord.getReadLength() - downstreamPrimerSequence.length()), downstreamPrimerSequence);
+
+                                double upstreamPrimerSimilarity = (double) (upstreamPrimerSequence.length() - upstreamPrimerHammingDist) / upstreamPrimerSequence.length();
+                                double downstreamPrimerSimilarity = (double) (downstreamPrimerSequence.length() - downstreamPrimerHammingDist) / downstreamPrimerSequence.length();
+
+                                if (upstreamPrimerSimilarity > primerSimilarity && downstreamPrimerSimilarity > primerSimilarity){
+                                    return true;
+                                }
+
+                                return false;
+
                             })
                             .forEach(samRecord -> {
 
@@ -165,6 +176,7 @@ public class Main {
                 }
 
             }
+
 
         } catch (IOException e){
             log.log(Level.SEVERE, "Could not read BAM file: " + e.getMessage());
