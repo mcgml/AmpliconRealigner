@@ -39,7 +39,7 @@ public class Main {
         options.addOption("P", "PrimerSimilarity", true, "Primer similarity [0.8]");
         options.addOption("Go", "GapOpen", true, "Read alignment gap open penalty [-14]");
         options.addOption("Ge", "GapExtend", true, "Read alignment gap extend penalty [-4]");
-        options.addOption("v", "Verbose", false, "Verbose logging");
+        options.addOption("V", "Verbose", false, "Verbose logging [false]");
 
         try {
             commandLine = commandLineParser.parse(options, args);
@@ -101,9 +101,11 @@ public class Main {
                     String upstreamPrimerSequence = referenceSequence.getReferenceSequence().substring(0, genomicLocation.getUpstreamPrimerLength());
                     String downstreamPrimerSequence = referenceSequence.getReferenceSequence().substring(referenceSequence.getReferenceSequence().length() - genomicLocation.getDownstreamPrimerLength());
 
-                    if (commandLine.hasOption("V")) log.log(Level.FINE, "Reference sequence: " + referenceSequence.getReferenceSequence());
-                    if (commandLine.hasOption("V")) log.log(Level.FINE, "Upstream primer: " + upstreamPrimerSequence);
-                    if (commandLine.hasOption("V")) log.log(Level.FINE, "Downstream primer: " + downstreamPrimerSequence);
+                    if (commandLine.hasOption("V")){
+                        log.log(Level.FINE, "Reference sequence: " + referenceSequence.getReferenceSequence());
+                        log.log(Level.FINE, "Upstream primer: " + upstreamPrimerSequence);
+                        log.log(Level.FINE, "Downstream primer: " + downstreamPrimerSequence);
+                    }
 
                     //query alignments
                     SAMRecordIterator samRecordIterator = samReader.queryOverlapping(genomicLocation.getContig(), genomicLocation.getStartPosition(), genomicLocation.getEndPosition());
